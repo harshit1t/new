@@ -4,151 +4,31 @@ const User=require("./model/user")
 const dbConnect=require("./config/database")
 const {validateSignupData}= require("./util/validations")
 const bcrypt =require("bcrypt")
-const cookieParser=require("cookie-parser")
 const jwt=require("jsonwebtoken");
-const {userAuth}=require("./middlewares/auth")
-//const {adminAuth,userAuth} = require("./middlewares/auth")
-//handle Auth middleware for all requests types/
-//work for all the routes
+const cookieParser=require("cookie-parser")
+const authRouter=require("./routes/auth")
+const profileRouter=require("./routes/profile")
+const requestRouter=require("./routes/request")
+
 app.use(express.json());
 app.use(cookieParser());
-app.post("/signup",async(req,res)=>{
-    
-
-    try {
-        //validation of data
-   //validateSignupData(req);
-        
-
-    //Encryp the password
-    const {firstName,lastName,emailId,password}=req.body;
-    const passwordHash=await bcrypt.hash(password,10);
-    // console.log(passwordHash)
+app.use("/",authRouter);
+app.use("/",profileRouter);
+app.use("/",requestRouter);
 
 
-    // Adding to database
-    const user=new User({
-        firstName,lastName,emailId,password:passwordHash
-    })
-        user.save();
-        res.send("data sent")
-        
-    } catch (err) {
-        res.status(400).send("Error "+err.message);
-        
-    }
-    
-    
-    //creating a new instance of user model
-//    firstName:"Harshit",
-//         lastName:"Tiwari",
-//         emailID:"qwr@hmail.com"
-//     }); const user=new User({
-        
-    // await user.save();
-    // res.send("Success")
-})
-//Feed api -get all user from db
-// app.get("/data/:userId",async (req,res)=>{
-//     const useId=req.params?.userId;
-//     // const userEmail=req.body.emailID;
-//     try {
-//         // const mkn=await User.find({emailId:userEmail});
-//         const user = await User.find({userId})
-//         res.send(user);
-        
-//     } catch (error) {
-//         res.status(403).send("not found")
-        
-//     }
-app.get("/profile",userAuth,async(req,res)=>{
-    try {
-       
-    const user = req.user
-    
-    res.send(user);
 
-    } catch (err) {
-        
-        res.status(400).send("Error "+err.message);
-    }
-})
-app.post("/login", async(req,res)=>{
-    try {
-        const {emailId,password}=req.body;
 
-        const user =await  User.findOne({emailId:emailId})
-        if (!user){
-            throw new Error("Invalid Credentials")
-        }
-        const isPasswordValid=await user.validatePassword(password)
-        if (isPasswordValid){
-            //create a jwt token
-            const token = await user.getJWT();
-            //add the token to cookie and send to user with the response
-            console.log(token);
-            res.cookie("token",token,{expires:new Date(Date.now()+2*36000000)});
-            res.send("login successfull");
-        }
-        else{
-            throw new Error("Invalid Password")
-        }
 
-    } catch (err) {
 
-        
-        res.status(400).send("Error "+err.message);
-        
-    }
 
-})
-app.post("/send",userAuth,async(req,res)=>{
-    const user=req.user;
-
-    res.send(user.firstName+" sends the request");
-})
-
-app.patch("/user/:userId",async(req,res)=>{
-    const userId=req.params?.userId;
-    const data= req.body;
-    try{
-        const AllowedUpdates=["about","gender","age","skill"]
-        const isAllowedUpdates=Object.keys(data).every((k)=>AllowedUpdates.includes(k));
-        if(!AllowedUpdates){
-            throw new Error ("Updates Not Allowed");
-        }
-        const user=await User.findByIdAndUpdate({id_:UserId},data,{
-            returnDocuments:"after",
-            returnValidators:"true"
-        });
-        console.log(user);
-        res.send("User updated successfully");
-    }
-    catch{
-        res.status(402).send("cannot updated")
-    }
-
-})
 dbConnect()
 .then(()=>{
     console.log("Connected Successfully");
      app.listen(3000,()=>{
-        console.log("firkjgkjgst")
+        console.log("Server is Running")
     }) ;
 })
 .catch((err)=>{
     console.log("error")
 });
-// app.get("/user",(req,res)=>{
-//     throw new console.error("jhfdhf");
-    
-//     res.send("User response is shown here")
-// });
-// app.use("/",(err,req,res,next)=>{
-//     if(err){
-//         res.status(401).send("Error Occured")
-//     }
-// })
-
-
-   

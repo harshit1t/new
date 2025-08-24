@@ -1,6 +1,6 @@
 const validator = require("validator")
 const validateSignupData=(req)=>{
-    const {firstName,lastName,emailId,password}=req.params;
+    const {firstName,lastName,emailId,password}=req.body;
     if(!firstName||!lastName){
         throw new Error ("Name is not valid")
     }
@@ -11,6 +11,7 @@ const validateSignupData=(req)=>{
 
         throw new Error ("Weak Password")
     }
+    return true;
 
 }
 module.exports={validateSignupData};
