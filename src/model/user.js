@@ -32,6 +32,22 @@ const userSchema=mongoose.Schema({
    },
    gender:{
     type:String
+   },
+   about:{
+    type:String
+   },
+   skills:{
+    type:[String]
+   },
+   photoUrl:{
+    type:String,
+    default:"https://en.wikipedia.org/wiki/Flag_of_India",
+    validate(value){
+        if(!validator.isURL(value)){
+            throw new Error("invalide Url "+ value)
+            
+        }
+    }
    }
 });
 userSchema.methods.getJWT=async function (){
