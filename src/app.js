@@ -4,10 +4,14 @@ const User=require("./model/user")
 const dbConnect=require("./config/database")
 const {validateSignupData}= require("./util/validations")
 const bcrypt =require("bcrypt")
+const cookieParser=require("cookie-parser")
+const jwt=require("jsonwebtoken");
+const {userAuth}=require("./middlewares/auth")
 //const {adminAuth,userAuth} = require("./middlewares/auth")
 //handle Auth middleware for all requests types/
 //work for all the routes
 app.use(express.json());
+app.use(cookieParser());
 app.post("/signup",async(req,res)=>{
     
 
@@ -57,16 +61,33 @@ app.post("/signup",async(req,res)=>{
 //         res.status(403).send("not found")
         
 //     }
+app.get("/profile",userAuth,async(req,res)=>{
+    try {
+       
+    const user = req.user
+    
+    res.send(user);
+
+    } catch (err) {
+        
+        res.status(400).send("Error "+err.message);
+    }
+})
 app.post("/login", async(req,res)=>{
     try {
         const {emailId,password}=req.body;
 
         const user =await  User.findOne({emailId:emailId})
         if (!user){
-            throw new Error("Email is not in DB")
+            throw new Error("Invalid Credentials")
         }
-        const isPasswordValid=await bcrypt.compare(password,user.password)
+        const isPasswordValid=await user.validatePassword(password)
         if (isPasswordValid){
+            //create a jwt token
+            const token = await user.getJWT();
+            //add the token to cookie and send to user with the response
+            console.log(token);
+            res.cookie("token",token,{expires:new Date(Date.now()+2*36000000)});
             res.send("login successfull");
         }
         else{
@@ -80,6 +101,11 @@ app.post("/login", async(req,res)=>{
         
     }
 
+})
+app.post("/send",userAuth,async(req,res)=>{
+    const user=req.user;
+
+    res.send(user.firstName+" sends the request");
 })
 
 app.patch("/user/:userId",async(req,res)=>{
