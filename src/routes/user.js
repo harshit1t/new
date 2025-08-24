@@ -2,6 +2,8 @@ const express=require("express");
 const userRouter=express.Router();
 const {userAuth}=require("../middlewares/auth");
 const ConnectionRequest=require("../model/connectionRequest")
+const User=require("../model/user")
+const USER_SAFE_DATA="firstName lastNmae age gender about skills photoUrl"
 
 
 //list of all pending connection request of loggedIn user
@@ -40,6 +42,45 @@ userRouter.get("/user/connections",userAuth,async(req,res)=>{
         
     } catch (err) {
          res.status(400).send("Error "+err.message);
+        
+    }
+})
+userRouter.get("/feed",userAuth,async(req,res)=>{
+    const page=parseInt(req.query.page)||1;
+    let limit=parseInt(req.query.limit)||10;
+    limit=limit>50?50:limit;
+    const skip=(page-1)*limit;
+   
+
+    try {
+         //user should see all card except
+    //his own
+    //request sent
+    //ignored people
+    //his connections
+    const loggedInUser=req.user;
+    //find all connection request sent+received
+    const connectionRequest=await ConnectionRequest.find({
+        $or:[
+            {fromUserId:loggedInUser._id},{toUserId:loggedInUser._id}
+        ]
+    }).select("fromUserId toUserId");
+    const hideUsersFromFeed=new Set();
+    connectionRequest.forEach(req => {
+        hideUsersFromFeed.add(req.fromUserId).toString(),
+        hideUsersFromFeed.add(req.toUserId).toString()
+        
+    });
+    const user=await User.find({
+       $and: [{_id:{$nin:Array.from(hideUsersFromFeed)}},
+        {_id:{$ne:loggedInUser._id}}
+       ],
+    }).select(USER_SAFE_DATA).skip(skip).limit(limit);
+    console.log(user);
+    res.json(user);
+        
+    } catch (err) {
+        res.status(400).send("Error "+err.message);
         
     }
 })
