@@ -8,6 +8,7 @@ const userSchema=mongoose.Schema({
         required:true,
         min:4,
         max:12,
+        index:true,
     },
     lastName:{
         type:String
@@ -31,7 +32,11 @@ const userSchema=mongoose.Schema({
     required:true,
    },
    gender:{
-    type:String
+    type:String,
+    enum:{
+        values:["male","female","others"],
+        message:`{value} "Invalid type"`
+    }
    },
    about:{
     type:String
